@@ -37,16 +37,23 @@ jobs:
           ref: release
           path: release
 
-      - uses: actions/checkout@v3
-      - name: Publish
-        run: |
-          mv composeApp/build/dist/wasmJs/productionExecutable/* ./release
-          cd release
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add .
-          git commit -m "Automatic commit, run id: ${{ github.run_id }}"
-          git push
+      - run: ls
+      - run: ls composeApp
+      - run: ls composeApp/build
+      - run: ls composeApp/build/dist
+      - run: ls composeApp/build/dist/wasmJs
+      - run: ls composeApp/build/dist/wasmJs/productionExecutable
+
+      # - uses: actions/checkout@v3
+      # - name: Publish
+      #   run: |
+      #     mv composeApp/build/dist/wasmJs/productionExecutable/* ./release
+      #     cd release
+      #     git config user.name github-actions[bot]
+      #     git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      #     git add .
+      #     git commit -m "Automatic commit, run id: ${{ github.run_id }}"
+      #     git push
       
   # dependency-submission:
 

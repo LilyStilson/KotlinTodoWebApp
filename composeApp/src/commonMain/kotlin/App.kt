@@ -1,3 +1,4 @@
+import androidx.compose.animation.*
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -5,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -33,30 +35,64 @@ fun App(testTasks: List<Task> = listOf()) {
             // also, this is cursed :D
             val filter: Boolean? = if (doneSelected || notDoneSelected) if (doneSelected) true else false else null
             val tasks by rememberSaveable { mutableStateOf(mutableStateListOf(*testTasks.toTypedArray())) }
-
+            
             val chipsOpacity by animateFloatAsState(
                 targetValue = if (tasks.isNotEmpty()) 1f else 0f,
                 animationSpec = TweenSpec(250)
             )
 
+            var isError by remember { mutableStateOf(false) }
+            var errorText by remember { mutableStateOf<String?>(null) }
+            
             Column(
                 Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                TodoInput(
-                    text = current,
-                    onTextChanged = { current = it },
-                    onTaskAdded = {
-                        tasks += Task(current.text, false)
-                        current = TextFieldValue("")
-                    }
-                )
-                if (tasks.isNotEmpty()) {
-                    Row(
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TodoInput(
                         modifier = Modifier
-                            .alpha(chipsOpacity),
+                            .padding(16.dp)
+                            .widthIn(256.dp, 512.dp)
+                            .fillMaxWidth(),
+                        text = current,
+                        onTextChanged = { 
+                            current = it
+                            isError = false
+                            errorText = null
+                        },
+                        onTaskAdded = {
+                            tasks += Task(current.text, false)
+                            current = TextFieldValue("")
+                        },
+                        isError = isError,
+                        errorText = errorText
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = {
+                            if (current.text.isBlank() || current.text.isEmpty()) {
+                                isError = true
+                                errorText = "You can't add an empty item to a list"
+                            } else {
+                                tasks += Task(current.text, false)
+                            }
+                        },
+                        modifier = Modifier.wrapContentWidth()
                     ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Add,
+                            contentDescription = "Add item"
+                        )
+                    }
+                }
+                AnimatedVisibility(
+                    visible = tasks.isNotEmpty(),
+                    enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
+                    modifier = Modifier.alpha(chipsOpacity)
+                ) {
+                    Row {
                         FilterChip(
                             selected = doneSelected,
                             onClick = {
@@ -90,17 +126,13 @@ fun App(testTasks: List<Task> = listOf()) {
                         }
                     }
                 }
-                val filteredTasks = if (filter != null) tasks.filter { task -> task.isChecked == filter } else tasks
-                if (filteredTasks.isNotEmpty()) {
-                    AnimatedTasksList(
-                        tasks = filteredTasks,
-                        onItemChecked = { idx, value -> tasks[idx] = tasks[idx].copy(isChecked = value) },
-                        onItemDeleted = { idx -> tasks.removeAt(idx) }
-                    )
-                } else {
-                    if (tasks.isNotEmpty())
-                        Text("No items found", fontSize = 2.em)
-                }
+                AnimatedTasksList(
+                    tasks = tasks,
+                    onItemChecked = { idx, value -> tasks[idx] = tasks[idx].copy(isChecked = value) },
+                    onItemChanged = { idx, text -> tasks[idx] = tasks[idx].copy(content = text) },
+                    onItemDeleted = { idx -> tasks.removeAt(idx) },
+                    filter = filter
+                )
             }
         }
     }

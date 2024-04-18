@@ -7,7 +7,11 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -20,62 +24,43 @@ fun ErrorLabel(text: String?) {
         Text(text, style = TextStyle.Default.copy(MaterialTheme.colors.error))
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TodoInput(
+    modifier: Modifier = Modifier,
     text: TextFieldValue,
     onTextChanged: (TextFieldValue) -> Unit,
-    onTaskAdded: () -> Unit
+    onTaskAdded: () -> Unit,
+    isError: Boolean = false,
+    errorText: String? = null
 ) {
-    var isError by remember { mutableStateOf(false) }
-    var errorText by remember { mutableStateOf<String?>(null) }
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .widthIn(256.dp, 512.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = text,
-                singleLine = true,
-                onValueChange = {
-                    isError = false
-                    errorText = null
-                    onTextChanged(it)
-                },
-                placeholder = { Text("I want to...") },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(onDone = { onTaskAdded() }),
-                modifier = Modifier.weight(1f),
-                isError = isError,
-                colors = TextFieldDefaults.textFieldColors(
-                    backgroundColor = Color.Transparent,
-                    placeholderColor = MaterialTheme.colors.onBackground.copy(alpha = 0.75f)
-                ),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = {
-                    if (text.text.isBlank() || text.text.isEmpty()) {
-                        isError = true
-                        errorText = "You can't add an empty item to a list"
-                    } else {
+    Column {
+        OutlinedTextField(
+            value = text,
+            singleLine = true,
+            onValueChange = {
+                onTextChanged(it)
+            },
+            placeholder = { Text("I want to...") },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = { onTaskAdded() }),
+            modifier = modifier
+                .onKeyEvent { 
+                    if (it.key == Key.Escape) {
                         onTaskAdded()
+                        false
+                    } else {
+                        false
                     }
                 },
-                modifier = Modifier.wrapContentWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Add,
-                    contentDescription = "Add item"
-                )
-            }
-        }
+            isError = isError,
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = Color.Transparent,
+                placeholderColor = MaterialTheme.colors.onBackground.copy(alpha = 0.75f)
+            )
+        )
         ErrorLabel(errorText)
     }
 }

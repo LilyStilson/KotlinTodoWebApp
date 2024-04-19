@@ -38,7 +38,7 @@ jobs:
 
       - name: Prepare repository
         run: |
-          mv -f composeApp/build/dist/wasmJs/productionExecutable/* ./release
+          rsync -a composeApp/build/dist/wasmJs/productionExecutable/* ./release
 
       - name: Publish
         uses: EndBug/add-and-commit@v9

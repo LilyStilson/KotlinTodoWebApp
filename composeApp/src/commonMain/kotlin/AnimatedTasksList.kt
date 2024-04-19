@@ -2,9 +2,9 @@
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
@@ -35,7 +35,7 @@ fun AnimatedTasksList(
             modifier = Modifier
                 .padding(16.dp)
                 .height(animatedHeight)
-                .widthIn(256.dp, 512.dp),
+                .fillMaxWidth(),
         ) {
             itemsIndexed(filteredTasks) { idx, task ->
                 AnimatedVisibility(

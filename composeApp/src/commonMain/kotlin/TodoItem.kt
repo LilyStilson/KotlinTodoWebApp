@@ -66,7 +66,8 @@ fun TodoItem(
                 onTaskAdded = {
                     isEditing = false
                     onItemChanged(current.text)
-                }
+                },
+                isAddBtnVisible = false
             )
             
             LaunchedEffect(Unit) {

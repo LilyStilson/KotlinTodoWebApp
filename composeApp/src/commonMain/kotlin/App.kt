@@ -1,17 +1,13 @@
 import androidx.compose.animation.*
-import androidx.compose.animation.core.TweenSpec
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import theme.DarkThemeColors
@@ -25,7 +21,7 @@ fun App(testTasks: List<Task> = listOf()) {
     MaterialTheme(
         colors = if(isSystemInDarkTheme()) DarkThemeColors else LightThemeColors
     ) {
-        Surface(Modifier.fillMaxSize()) {
+        Surface(Modifier.fillMaxSize(), ) {
             var current by rememberSaveable { mutableStateOf(TextFieldValue("")) }
 
             var doneSelected by rememberSaveable { mutableStateOf(false) }
@@ -35,61 +31,34 @@ fun App(testTasks: List<Task> = listOf()) {
             val filter: Boolean? = if (doneSelected || notDoneSelected) if (doneSelected) true else false else null
             val tasks by rememberSaveable { mutableStateOf(mutableStateListOf(*testTasks.toTypedArray())) }
             
-            val chipsOpacity by animateFloatAsState(
-                targetValue = if (tasks.isNotEmpty()) 1f else 0f,
-                animationSpec = TweenSpec(250)
-            )
-
-            var isError by remember { mutableStateOf(false) }
-            var errorText by remember { mutableStateOf<String?>(null) }
-            
             Column(
-                Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .wrapContentWidth(Alignment.CenterHorizontally)
+                    .wrapContentHeight()
+                    .widthIn(256.dp, 512.dp),
+                
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Box {
                     TodoInput(
                         modifier = Modifier
                             .padding(16.dp)
-                            .widthIn(256.dp, 512.dp)
                             .fillMaxWidth(),
                         text = current,
                         onTextChanged = { 
                             current = it
-                            isError = false
-                            errorText = null
                         },
                         onTaskAdded = {
                             tasks += Task(current.text, false)
                             current = TextFieldValue("")
-                        },
-                        isError = isError,
-                        errorText = errorText
+                        }
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            if (current.text.isBlank() || current.text.isEmpty()) {
-                                isError = true
-                                errorText = "You can't add an empty item to a list"
-                            } else {
-                                tasks += Task(current.text, false)
-                            }
-                        },
-                        modifier = Modifier.wrapContentWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Add,
-                            contentDescription = "Add item"
-                        )
-                    }
                 }
                 AnimatedVisibility(
                     visible = tasks.isNotEmpty(),
                     enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
                     exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
-                    modifier = Modifier.alpha(chipsOpacity)
                 ) {
                     Row {
                         FilterChip(

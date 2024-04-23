@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,15 +18,12 @@ import androidx.compose.ui.unit.em
 @Composable
 fun AnimatedTasksList(
     tasks: List<Task>,
-    onItemChecked: (Int, Boolean) -> Unit,
-    onItemChanged: (Int, String) -> Unit,
-    onItemDeleted: (Int) -> Unit,
-    filter: Boolean?
+    initialCount: Int? = null,
+    onItemChanged: (Task) -> Unit,
+    onItemDeleted: (Int) -> Unit
 ) {
-    val filteredTasks = if (filter != null) tasks.filter { task -> task.isChecked == filter } else tasks
-    
     val animatedHeight by animateDpAsState(
-        targetValue = if (tasks.isNotEmpty()) 72.dp * filteredTasks.count() else 0.dp,
+        targetValue = if (tasks.isNotEmpty()) 72.dp * if (initialCount != null && initialCount != 0 && tasks.isEmpty()) 1 else tasks.count() else 0.dp,
         animationSpec = TweenSpec(durationMillis = 250)
     )
 
@@ -37,23 +34,22 @@ fun AnimatedTasksList(
                 .height(animatedHeight)
                 .fillMaxWidth(),
         ) {
-            itemsIndexed(filteredTasks) { idx, task ->
+            items(tasks) { 
                 AnimatedVisibility(
                     visible = true,
                     enter = slideInVertically() + fadeIn(),
                     exit = slideOutVertically() + fadeOut()
                 ) {
                     TodoItem(
-                        task.content,
-                        task.isChecked,
-                        onChecked = { onItemChecked(idx, it) },
-                        onItemChanged = { onItemChanged(idx, it) },
-                        onDeleteClick = { onItemDeleted(idx) }
+                        it,
+                        onItemChanged = { task -> onItemChanged(task) },
+                        onDeleteClick = { onItemDeleted(it.key) }
                     )
                 }
             }
         }
-        if (filteredTasks.isEmpty() && tasks.isNotEmpty()) {
+
+        if (initialCount != null && initialCount != 0 && tasks.isEmpty()) {
             Text("No items found", fontSize = 2.em)
         }
     }

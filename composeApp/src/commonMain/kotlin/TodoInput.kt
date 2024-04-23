@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,46 +27,48 @@ fun ErrorLabel(modifier: Modifier = Modifier, text: String?) {
 
 @Composable
 fun TodoInput(
+    task: Task? = null,
     modifier: Modifier = Modifier,
-    text: TextFieldValue,
-    onTextChanged: (TextFieldValue) -> Unit,
-    onTaskAdded: () -> Unit,
-//    isError: Boolean = false,
-    isAddBtnVisible: Boolean? = true,
-//    errorText: String? = null
+    onTaskAdded: (Task) -> Unit,
+    onEditingCanceled: () -> Unit = {},
+    isAddBtnVisible: Boolean? = true
 ) {
+    var current by remember { mutableStateOf(TextFieldValue(task?.content ?: "", selection = TextRange(task?.content?.length ?: 0))) }
     var isError by remember { mutableStateOf(false) }
     var errorText by remember { mutableStateOf<String?>(null) }
     
     fun taskAddHandler() {
-        if (text.text.isBlank() || text.text.isEmpty()) {
+        if (current.text.isBlank() || current.text.isEmpty()) {
             isError = true
             errorText = "You can't add an empty item to a list"
         } else {
-            onTaskAdded()
+            onTaskAdded(Task(content = current.text))
         }
     }
     
     Column {
         OutlinedTextField(
-            value = text,
+            value = current,
             singleLine = true,
             onValueChange = {
                 isError = false
                 errorText = null
-                onTextChanged(it)
+                current = it
             },
             placeholder = { Text("I want to...") },
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Done
             ),
-            keyboardActions = KeyboardActions(onDone = { taskAddHandler() }),
+            keyboardActions = KeyboardActions(onDone = { 
+                taskAddHandler()
+                current = TextFieldValue("")
+            }),
             modifier = modifier.padding(bottom = 0.dp)
                 .onKeyEvent { 
                     if (it.key == Key.Escape) {
                         if (isAddBtnVisible == false) {
-                            taskAddHandler()
+                            onEditingCanceled()
                         }
                         false
                     } else {

@@ -17,8 +17,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -26,46 +24,45 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun TodoItem(
-    text: String,
-    isChecked: Boolean,
-    onChecked: (Boolean) -> Unit,
-    onItemChanged: (String) -> Unit,
+    task: Task,
+    onItemChanged: (Task) -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    var current by remember { mutableStateOf(TextFieldValue(text, selection = TextRange(text.length))) }
+    val initialText = task.content
     var isEditing by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     
     val opacity: Float by animateFloatAsState(
-        targetValue = if (isChecked) 0.5f else 1f,
+        targetValue = if (task.isChecked) 0.5f else 1f,
         animationSpec = TweenSpec(250)
     )
 
     val strikeWidth: Float by animateFloatAsState(
-        targetValue = if (isChecked) 1f else 0f,
+        targetValue = if (task.isChecked) 1f else 0f,
         animationSpec = TweenSpec(250)
     )
 
     val borderWidth: Dp by animateDpAsState(
-        targetValue = if (isChecked) 0.dp else 1.dp,
+        targetValue = if (task.isChecked) 0.dp else 1.dp,
         animationSpec = TweenSpec(250)
     )
 
     Box(modifier = Modifier) {
         if (isEditing) {
             TodoInput(
+                task = task,
                 modifier = Modifier
                     .height(72.dp)
                     .padding(top = 8.dp, bottom = 8.dp)
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
-                text = current,
-                onTextChanged = {
-                    current = it
+                onEditingCanceled = {
+                    isEditing = false
+                    onItemChanged(task.copy(content = initialText))
                 },
                 onTaskAdded = {
                     isEditing = false
-                    onItemChanged(current.text)
+                    onItemChanged(task.copy(content = it.content))
                 },
                 isAddBtnVisible = false
             )
@@ -96,8 +93,8 @@ fun TodoItem(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
-                            checked = isChecked,
-                            onCheckedChange = { onChecked(it) },
+                            checked = task.isChecked,
+                            onCheckedChange = { onItemChanged(task.copy(isChecked = it)) },
                             colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.primary)
                         )
                         val lineColor = MaterialTheme.colors.onSurface
@@ -112,7 +109,7 @@ fun TodoItem(
                                     )
                                 }
                         ) {
-                            Text(textAlign = TextAlign.Left, overflow = TextOverflow.Ellipsis, text = text)
+                            Text(textAlign = TextAlign.Left, overflow = TextOverflow.Ellipsis, text = task.content)
                         }
                     }
 

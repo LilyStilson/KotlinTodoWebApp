@@ -8,12 +8,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import theme.DarkThemeColors
 import theme.LightThemeColors
-
-data class Task(val content: String, var isChecked: Boolean = false)
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -22,14 +19,13 @@ fun App(testTasks: List<Task> = listOf()) {
         colors = if(isSystemInDarkTheme()) DarkThemeColors else LightThemeColors
     ) {
         Surface(Modifier.fillMaxSize(), ) {
-            var current by rememberSaveable { mutableStateOf(TextFieldValue("")) }
-
             var doneSelected by rememberSaveable { mutableStateOf(false) }
             var notDoneSelected by rememberSaveable { mutableStateOf(false) }
             // true - done, false - not done, null - don't filter
             // also, this is cursed :D
             val filter: Boolean? = if (doneSelected || notDoneSelected) if (doneSelected) true else false else null
-            val tasks by rememberSaveable { mutableStateOf(mutableStateListOf(*testTasks.toTypedArray())) }
+            val tasks by remember { mutableStateOf(mutableStateListOf(*testTasks.toTypedArray())) }
+            val filteredTasks = if (filter != null) tasks.filter { task -> task.isChecked == filter } else tasks
             
             Column(
                 modifier = Modifier
@@ -45,13 +41,8 @@ fun App(testTasks: List<Task> = listOf()) {
                         modifier = Modifier
                             .padding(16.dp)
                             .fillMaxWidth(),
-                        text = current,
-                        onTextChanged = { 
-                            current = it
-                        },
                         onTaskAdded = {
-                            tasks += Task(current.text, false)
-                            current = TextFieldValue("")
+                            tasks += it
                         }
                     )
                 }
@@ -95,11 +86,16 @@ fun App(testTasks: List<Task> = listOf()) {
                     }
                 }
                 AnimatedTasksList(
-                    tasks = tasks,
-                    onItemChecked = { idx, value -> tasks[idx] = tasks[idx].copy(isChecked = value) },
-                    onItemChanged = { idx, text -> tasks[idx] = tasks[idx].copy(content = text) },
-                    onItemDeleted = { idx -> tasks.removeAt(idx) },
-                    filter = filter
+                    tasks = filteredTasks,
+                    initialCount = tasks.count(),
+                    onItemChanged = { task ->
+                        val idx = tasks.indexOfFirst { it.key == task.key }
+                        tasks[idx] = task
+                    },
+                    onItemDeleted = { key ->
+                        val idx = tasks.indexOfFirst { it.key == key }
+                        tasks.removeAt(idx)
+                    }
                 )
             }
         }
